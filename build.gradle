@@ -1,0 +1,96 @@
+import io.github.msnishan.gen.OpenApiJpaGeneratorTask
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openapi.generator' version '7.10.0'
+	id 'io.github.msnishan.gen' version '1.0.0'
+}
+
+
+group = 'com.msishan.openapi.gen'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+	implementation 'org.mapstruct:mapstruct:1.6.3'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+
+
+	runtimeOnly 'com.h2database:h2'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir "$rootDir/generated/src/main/java"
+		}
+	}
+}
+
+
+openApiGenerate {
+	generatorName = 'spring'
+	inputSpec.set("$rootDir/src/main/resources/openapi/example.yaml")
+	outputDir.set("$rootDir/generated")
+	apiPackage = "com.jpagen.example.api"
+	modelPackage = "com.jpagen.example.dto"
+	typeMappings = [
+			"time": "LocalTime",
+			"date-time": "LocalDateTime"
+	]
+	importMappings = [
+			"LocalTime": "java.time.LocalTime",
+			"LocalDateTime": "java.time.LocalDateTime"
+	]
+	configOptions = [
+			useTags               : 'true',
+			dateLibrary           : 'java8',
+			useJakartaEe          : 'true',
+			nullableReferences    : 'false',
+			interfaceOnly         : "true"
+	]
+
+	openapiNormalizer = [
+			'REF_AS_PARENT_IN_ALLOF': 'true'
+	]
+}
+
+
+tasks.named("generateOpenApiJpaEntities") {
+	specFile = "$rootDir/src/main/resources/openapi/example.yaml"
+	packageName = "com.jpagen.example.entity"
+	outputDir = file("$rootDir/generated/src/main/java")
+}
+
+clean.doFirst {
+	delete "$rootDir/generated"
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

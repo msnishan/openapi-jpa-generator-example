@@ -1,0 +1,190 @@
+openapi: 3.0.3
+info:
+  title: Example models
+  version: 1.0.0
+
+paths:
+  /user:
+    post:
+      summary: Create user
+      operationId: createUser
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Successful creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUser'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '503':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /order:
+    post:
+      summary: Create user
+      operationId: createOrder
+      tags:
+        - Order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '200':
+          description: Successful creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseOrder'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '503':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+tags:
+  - name: User
+  - name: Order
+
+components:
+  schemas:
+
+    Order:
+      type: object
+      required:
+        - txnId
+        - orderDt
+        - orderId
+      properties:
+        orderId:
+          type: string
+        orgId:
+          type: string
+        txnId:
+          type: string
+          x-unique: true
+          x-column-name: TRANSACTION_ID
+        orderDt:
+          type: date-time
+        requestId:
+          type: string
+          x-ignore: true
+        user:
+          $ref: '#/components/schemas/User'
+          x-rel: many-to-one
+      x-persist: Entity
+      x-table: ORDER_ENTITY
+      x-unique:
+        - [orgId, orderId]
+      x-extends: com.jpagen.example.entity.BaseEntity
+
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+        orgId:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+          x-rel: embedded
+        order:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+          x-rel: one-to-many
+      x-persist: Entity
+      x-extends: com.jpagen.example.entity.BaseEntity
+
+    Address:
+      type: object
+      required:
+        - line1
+        - pin
+        - country
+      properties:
+        line1:
+          type: string
+          maxLength: 100
+        line2:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+        pin:
+          type: string
+        district:
+          type: string
+        county:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+      x-persist: Embeddable
+
+    ApiResponseUser:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+
+    ApiResponseOrder:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Order'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
+
+    # === API Error DTO ===
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    # === Generic Wrapper: Error ===
+    ApiResponseError:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiError'
